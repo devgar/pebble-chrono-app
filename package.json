@@ -1,0 +1,48 @@
+{
+  "name": "garAPP",
+  "author": "MakeAwesomeHappen",
+  "version": "1.0.0",
+  "keywords": ["pebble-app"],
+  "private": true,
+  "dependencies": {},
+  "pebble": {
+    "displayName": "garAPP",
+    "uuid": "2431d1cc-6dd4-454b-a727-5b4af02506c4",
+    "sdkVersion": "3",
+    "enableMultiJS": true,
+    "targetPlatforms": [
+      "aplite",
+      "basalt",
+      "chalk",
+      "diorite"
+    ],
+    "watchapp": {
+      "watchface": false
+    },
+    "messageKeys": [
+      "op"
+    ],
+    "resources": {
+      "media": [
+        {
+          "characterRegex": "[:0-9]",
+          "type": "font",
+          "name": "FONT_VT_42",
+          "file": "fonts/VT323-Regular.ttf"
+        },
+        {
+          "characterRegex": "[:0-9]",
+          "type": "font",
+          "name": "FONT_VT_24",
+          "file": "fonts/VT323-Regular.ttf"
+        },
+        {
+          "characterRegex": "[:0-9]",
+          "type": "font",
+          "name": "FONT_VT_20",
+          "file": "fonts/VT323-Regular.ttf"
+        }
+      ]
+    }
+  }
+}
