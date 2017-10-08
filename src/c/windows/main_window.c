@@ -1,14 +1,19 @@
 #include "main_window.h"
 
+typedef struct {
+  uint64_t start, pause, laps[8];
+  uint num;
+} Data;
+
 static Window *s_window;
 static TextLayer *s_time_layer, *s_txts_layer;
 static BitmapLayer *s_bb1_layer, *s_bb2_layer;
 static GFont s_time_font, s_mult_font;
 static GRect bounds;
 static AppTimer * timer;
-static char s_title_arr[8] = "00:00:0", s_multime_arr[100] = "";
-static uint64_t START_MS = 0, PAUSE_MS=0, LAPS[16];
-static uint LAPS_NUM = 0;
+static char s_title_arr[8] = "00:00:0", s_multime_arr[16 * 8] = "";
+static Data gD;
+static uint key = 3;
 
 static void bb_layer_load(Layer *window_layer){
   
@@ -72,26 +77,26 @@ static void timer_display(uint64_t ms, char o[], uint i){
 
 static void multime()
 {
-  if(LAPS_NUM < 1) return;
-  timer_display(LAPS[0] - START_MS, s_multime_arr, 0);
+  if(gD.num < 1) return;
+  timer_display(getTime() - gD.laps[gD.num-1], s_multime_arr, 0);
   s_multime_arr[7] = ' ';
-  timer_display(LAPS[0] - START_MS, s_multime_arr, 8);
+  timer_display(getTime() - gD.start, s_multime_arr, 8);
   s_multime_arr[15] = '\n';
-  for(uint i=1; i<LAPS_NUM; i++){
-    timer_display(LAPS[i] - LAPS[i-1], s_multime_arr, i*16);
+  for(uint i=1; i<gD.num; i++){
+    timer_display(gD.laps[gD.num -i] - gD.laps[gD.num -i-1], s_multime_arr, i*16);
     s_multime_arr[7 + i*16] = ' ';
-    timer_display(LAPS[i] - START_MS, s_multime_arr, 8+i*16);
+    timer_display(gD.laps[gD.num -i] - gD.start, s_multime_arr, 8+i*16);
     s_multime_arr[15 + i*16] = '\n';
   }
-  timer_display(getTime() - LAPS[LAPS_NUM-1], s_multime_arr, LAPS_NUM* 16);
-  s_multime_arr[7 + LAPS_NUM*16] = ' ';
-  timer_display(getTime() - START_MS, s_multime_arr, 8+LAPS_NUM* 16);
+  timer_display(gD.laps[0] - gD.start, s_multime_arr, gD.num* 16);
+  s_multime_arr[7 + gD.num*16] = ' ';
+  timer_display(gD.laps[0] - gD.start, s_multime_arr, 8+gD.num* 16);
 }
 
 static void timer_callback(){
-  timer_display(getTime() - START_MS, s_title_arr, 0);
+  timer_display(getTime() - gD.start, s_title_arr, 0);
   text_layer_set_text(s_time_layer, s_title_arr);
-  if(LAPS_NUM != 0 )
+  if(gD.num != 0 )
   {
     multime();
     text_layer_set_text(s_txts_layer, s_multime_arr);
@@ -101,39 +106,81 @@ static void timer_callback(){
 
 static void start_chronno(){
   uint64_t NOW = getTime();
-  START_MS = NOW - (PAUSE_MS - START_MS);
-  for(uint i = 0; i < LAPS_NUM; i++)
-    LAPS[i] = NOW - (PAUSE_MS - LAPS[i]);
-  PAUSE_MS = 0;
+  gD.start = NOW - (gD.pause - gD.start);
+  for(uint i = 0; i < gD.num; i++)
+    gD.laps[i] = NOW - (gD.pause - gD.laps[i]);
+  gD.pause = 0;
   
+  persist_write_data(key, &gD, sizeof(Data));
   timer = app_timer_register(100, timer_callback, NULL);
 }
 
 static void pause_chronno(){
-  PAUSE_MS = getTime();
+  gD.pause = getTime();
   app_timer_cancel(timer);
+  persist_write_data(key, &gD, sizeof(Data));
 }
 
 static void select_click_handler(ClickRecognizerRef recognizer, void *context) {
-  if(START_MS == 0 || PAUSE_MS >0) start_chronno();
+  if(gD.start == 0 || gD.pause >0) start_chronno();
   else pause_chronno();
 }
 
+static void initData(){
+  if (persist_exists(key)){
+    persist_read_data(key, &gD, sizeof(Data));
+    if(gD.start!=0){
+      if(gD.pause==0)
+      {
+        app_timer_register(100, timer_callback, NULL);
+        timer_display(getTime() - gD.start, s_title_arr, 0);
+      }else{
+        timer_display(gD.pause - gD.start, s_title_arr, 0);
+      }
+    }
+    multime();
+  }else 
+    gD = (Data) { 
+      .start = 0, 
+      .pause = 0, 
+      .num = 0 
+    };
+}
+
 static void down_click_handler(ClickRecognizerRef recognizer, void * context){
-  if(PAUSE_MS == 0 && START_MS > 0)
+  if(gD.pause == 0 && gD.start > 0)
   {
-    if(LAPS_NUM < 4) LAPS[LAPS_NUM++] = getTime();
+    if(gD.num < 7) gD.laps[gD.num++] = getTime();
+    else{
+      for(uint i=0; i< gD.num-1; i++)
+      {
+        gD.laps[i] = gD.laps[i+1];
+      }
+      gD.laps[gD.num-1] = getTime();
+    }
   } else {
-    LAPS_NUM = 0;
-    emptyArr(s_multime_arr, 100);
+    gD.num = 0;
+    emptyArr(s_multime_arr, 128);
     text_layer_set_text(s_txts_layer, s_multime_arr);
   }
+  persist_write_data(key, &gD, sizeof(Data));
+}
+
+static void up_click_handler(ClickRecognizerRef recognizer, void * context){
+  if(gD.pause == 0) gD.start = getTime();
+  else gD.start = 0;
+  gD.pause = 0;
+  gD.num = 0;
+  emptyArr(s_multime_arr, 128);
+  text_layer_set_text(s_txts_layer, s_multime_arr);
+  text_layer_set_text(s_time_layer, "00:00:0");
+  persist_write_data(key, &gD, sizeof(Data));
 }
 
 static void click_config_provider(void * context){
-  ButtonId id = BUTTON_ID_SELECT;  // The Select button
-  window_single_click_subscribe(id, select_click_handler);
+  window_single_click_subscribe(BUTTON_ID_SELECT, select_click_handler);
   window_single_click_subscribe(BUTTON_ID_DOWN, down_click_handler);
+  window_single_click_subscribe(BUTTON_ID_UP, up_click_handler);
 }
 
 static void window_load(Window *window) {
@@ -141,6 +188,7 @@ static void window_load(Window *window) {
   bounds = layer_get_bounds(window_layer);
   title_layer_load(window_layer);
   bb_layer_load(window_layer);
+  initData();
   window_set_click_config_provider(window, click_config_provider);
 }
 
