@@ -1,48 +1,47 @@
 {
-  "name": "garAPP",
-  "author": "MakeAwesomeHappen",
-  "version": "1.0.0",
-  "keywords": ["pebble-app"],
-  "private": true,
-  "dependencies": {},
-  "pebble": {
-    "displayName": "garAPP",
-    "uuid": "2431d1cc-6dd4-454b-a727-5b4af02506c4",
-    "sdkVersion": "3",
-    "enableMultiJS": true,
-    "targetPlatforms": [
-      "aplite",
-      "basalt",
-      "chalk",
-      "diorite"
+    "author": "MakeAwesomeHappen",
+    "dependencies": {},
+    "keywords": [
+        "pebble-app"
     ],
-    "watchapp": {
-      "watchface": false
-    },
-    "messageKeys": [
-      "op"
-    ],
-    "resources": {
-      "media": [
-        {
-          "characterRegex": "[:0-9]",
-          "type": "font",
-          "name": "FONT_VT_42",
-          "file": "fonts/VT323-Regular.ttf"
+    "name": "garapp",
+    "pebble": {
+        "displayName": "garAPP",
+        "enableMultiJS": true,
+        "messageKeys": [
+            "op"
+        ],
+        "projectType": "native",
+        "resources": {
+            "media": [
+                {
+                    "characterRegex": "[:0-9]",
+                    "file": "fonts/VT323-Regular.ttf",
+                    "name": "FONT_VT_20",
+                    "type": "font"
+                },
+                {
+                    "characterRegex": "[:0-9]",
+                    "file": "fonts/VT323-Regular.ttf",
+                    "name": "FONT_VT_24",
+                    "type": "font"
+                },
+                {
+                    "characterRegex": "[:0-9]",
+                    "file": "fonts/VT323-Regular.ttf",
+                    "name": "FONT_VT_42",
+                    "type": "font"
+                }
+            ]
         },
-        {
-          "characterRegex": "[:0-9]",
-          "type": "font",
-          "name": "FONT_VT_24",
-          "file": "fonts/VT323-Regular.ttf"
-        },
-        {
-          "characterRegex": "[:0-9]",
-          "type": "font",
-          "name": "FONT_VT_20",
-          "file": "fonts/VT323-Regular.ttf"
+        "sdkVersion": "3",
+        "targetPlatforms": [
+            "diorite"
+        ],
+        "uuid": "2431d1cc-6dd4-454b-a727-5b4af02506c4",
+        "watchapp": {
+            "watchface": false
         }
-      ]
-    }
-  }
+    },
+    "version": "1.0.0"
 }

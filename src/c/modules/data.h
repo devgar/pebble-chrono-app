@@ -2,10 +2,21 @@
 
 #include <pebble.h>  // Pebble SDK symbols
 
-void data_init(int array_length);
+char s_title_arr[8], s_multime_arr[16 * 8];
 
-void data_deinit();
+typedef struct {
+  uint64_t start, pause, laps[8];
+  uint num;
+} Data;
 
-void data_set_array_value(int index, int new_value);
+Data gD;
 
-int data_get_array_value(int index);
+uint key;
+
+uint64_t getTime();
+
+void multime();
+
+void emptyArr(char o[], uint max);
+
+void timer_display(uint64_t ms, char o[], uint i);
